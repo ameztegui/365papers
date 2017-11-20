@@ -5,6 +5,7 @@ library(ggplot2)
 library(gsheet)
 library(ggvis)
 
+# for 2017
 papers<-gsheet2tbl("https://docs.google.com/spreadsheets/d/1YfoVr_NlJkR3vOkrF8iyM2LJO_Q9rW9bd2ljNBXFoEg/edit?usp=sharing")
 papers$Journal <- as.factor(papers$Journal)
 papers$Institution <- as.factor(papers$Institution)
