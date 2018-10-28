@@ -1,0 +1,145 @@
+---
+title: '#365papers'
+author: "Aitor Ameztegui - UdL"
+date: "28 de octubre de 2018"
+output: html_document
+---
+
+```{r echo = F, message=FALSE}
+library(tidyverse)
+library(googlesheets)
+library(ggvis)
+library(patchwork)
+```
+
+
+```{r echo = F, message = F}
+# for 2017
+# gs_auth(new_user = TRUE)
+
+papers <- gs_read(gs_title("#365 papers"), ws="2016")
+papers$Journal <- as.factor(papers$Journal)
+papers$Institution <- as.factor(papers$Institution)
+papers$Country<- as.factor(papers$Country)
+papers$Gender <- as.factor(papers$Gender)
+papers$Date_read <- as.Date(papers$Date_read, "%d/%m/%Y")
+```
+
+
+Allá por enero de 2016 expliqué públicamente por aquí cuáles eran algunos de los propósitos que me hacía por el nuevo año. Entre otros, os explicaba que me iba a apuntar, por segundo año consecutivo, al reto #365papers. La iniciativa fue concebida por la paleoecóloga Jacquelyn Gill, y consiste, básicamente, en leer un paper - un artículo científico - cada uno de los días del año, y compartir nuestras lecturas en Twitter con el hashtag #365papers. Os contaba ya por entonces que sabía que ni de coña llegaba a 365, pero el apuntarme al reto tenía para mi un doble propósito. Por un lado, suponía que me iba a animar a leer más que antes, y por otro, tomé la decisión de apuntar lo que leía: revista, año de publicación, país del autor principal. Pensaba que esta información podía darme pistas sobre mis patrones de lectura, y que eso podría ser interesante. Al menos, para mí. Acabado el año, toca analizar los datos y ver qué he leido durante 2016.
+
+### GENERAL
+Como suponía, me he quedado bastante lejos de los 365 papers sugeridos, y he parado el contador en 82 artículos, de los cuales 76 eran artículos ya publicados y 6 artículos que yo he revisado para alguna revista. En análisis anteriores hay gente que ha incluido las diferentes versiones de sus propios manuscritos o capítulos de tesis de sus estudiantes, pero personalmente me parece que no procede. Respecto al número, tengo que decir que en mi cabeza pensaba que un número cercano a los 100 papers podía ser un objetivo razonable, así que no me he quedado demasiado lejos. A ver si para el año que viene supero la barrera de los 100.
+
+
+### REVISTAS
+Aquí me llevé la primera sorpresa, y es que ni más ni menos que 14 de los artículos (el 30%!) pertenecían a Forest Ecology and Management. El resto de revistas se quedaron mucho más lejos, destacando Ecological Applications con 4 artículos. Queda claro que mi investigación tiene un punto aplicado, por lo que se ve.
+
+```{r echo = F, fig.align = "center"}
+# Bars for Journals
+papers %>%
+        ggvis(~Journal) %>%
+        layer_bars() %>%
+        add_axis("x", title = "Journal", 
+                 title_offset = 230,
+                 properties = axis_props(labels = list(angle = 90, align = "left",
+                                                       baseline="middle")))
+
+```
+
+
+### AÑO DE PUBLICACIÓN
+Otra sorpresa. Normalmente intento estar al dia de la literatura que va saliendo en ecología forestal, aunque sea tarea imposible, pero lo cierto es que al final uno acaba leyendo mucho para documentar la introducción y la discusión de sus propios artículos, así que esperaba que hubiera un poco de todo. Por eso me sorprendió ver que la mayoría de artículos que he leído durante 2016 se habían publicado ese mismo año, y sobre todo que no he leído nada anterior al 2000 (!). Así que si tuviera que hacer un propósito de enmienda, sería que tengo que revisitar los clásicos más a menudo!
+
+```{r echo = F, fig.align = "center"}
+# Histogram per years
+papers %>%
+        ggvis(~Year) %>%
+        layer_bars() %>%
+        add_axis("x",  values = seq(2000, 2016, by = 1),
+                 title_offset = 50,
+                 properties = axis_props(labels = list(angle = 90, align = "left", 
+                                                       baseline="middle")))
+```
+
+
+### PAÍS DE ORÍGEN
+Todos sabemos la posición dominante de Estados Unidos en investigación (aunque puede que Trump cambie esto en poco tiempo). Sin embargo, no esperaba que casi la mitad de los artículos leídos tuvieran como primer autor a alguien trabajando en una institución norteamericana. Quizá se pueda explicar, aparte de por ser una superpotencia, porque a principios de año leí muchos artículos sobre percepción social del cambio climático y cómo diversos factores como la posición ideológica, la formación, el Estado de residencia etc. pueden afectar a estas percepciones. Y en eso sí que el 90% de la literatura publicada es estadounidense. ¡Veremos si el año que viene se destaca tanto! Sí que esperaba, en cambio, el alto número de artículos de españoles y canadienses, por razones obvias, al final son los dos países donde trabajo.
+
+
+
+```{r echo = F}
+# Bars for Country
+papers %>%
+        ggvis(~Country) %>%
+        layer_bars() %>%
+        add_axis("x", title = "Country",title_offset = 60,
+                 properties = axis_props(labels = list(angle = 90,
+                                                       align = "left",
+                                                       baseline="middle")))
+
+```
+
+
+
+### NÚMERO DE AUTORES Y BALANCE DE GÉNERO
+
+
+
+
+```{r echo = F, fig.align = "center"}
+# Histogram per # authors
+nauthors <- papers %>%
+    filter(N_authors <= 40) %>%
+        ggvis(~N_authors) %>%
+        layer_bars() 
+
+# Bars for Gender
+gender <- papers %>%
+        ggvis(~Gender) %>%
+        layer_bars() %>%
+        add_axis("x", title = "Gender")
+
+
+nauthors  
+gender
+
+```
+
+Lo del número de autores es más una curiosidad, porque realmente no dice nada sobre mis patrones de lectura, pero la mayoría de papers  tenía 3 o 4 autores, con unos pocos outliers de más de 15 y uno, que ni siquiera muestro, con 80 y pico. Sí que me interesaba más saber el ratio hombres:mujeres entre los primeros autores de lo que leo. Los datos muestran que no estoy en el deseable 50:50, pero tampoco tan lejos (60:40). Hay datos que muestran que ~43% de los primeros autores en revistas de ecología son mujeres, así que esto sugeriría que no hay un sesgo particular entre lo que se publica y lo que leo.
+
+
+###  FECHA DE LECTURA
+```{r echo = F, fig.align = "center"}
+# Cumulative frequency date read
+papers %>% 
+        ggplot(aes(x =Date_read,y=seq_along(Date_read))) +
+        geom_step() +
+        scale_x_date(date_breaks = "1 month", date_labels = "%B") +
+        ylab("Number of papers") +
+        xlab ("Date read") +
+        theme_bw() +
+        theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5))
+```
+
+Apuntar la fecha de lectura en principio podía servir para ver si soy constante o no, y de hecho ha servido bastante bien. Cada uno podrá sacar sus propias conclusiones, pero yo diría que, durante buena parte del ño, el ritmo ha sido bastante sostenido, aunque se nota el apretón final. Que no, no tiene que ver con que quisiera "maquillar" los datos, sino que a finales de año envié a revisión 3 artículos, lo cual ya sabéis que supone numerosas lecturas. Eso sí, se ven claramente tres periodos de "no lectura", de los que he podido asociar 2 con periodos muy definidos (curioso, no esperaba que se viera tan claro!).
+
+El primero, entre marzo y abril, coincidió con mi labor como jurado en los premios universitarios de la SECF, de los que por cierto, se cierra hoy el plazo para la edición de 2016. Ya conté por aquí  que esto me supuso tener que leer 3 proyectos final de grado, 3 Tesis de Master y ni más ni menos que 9 tesis doctorales, con lo que durante un par de semanas toda mi actividad lectora se centro en esto, no me quedaban demasiadas ganas de seguir leyendo.
+
+El segundo periodo sin lecturas que reconozco se extiende entre principios de agosto y finales de octubre, dos meses en los que apenas leí uno o dos papers. Y es que se juntaron la campaña de muestreo de campo, las vacaciones de verano, y una apendicitis que se me complicó y me tuvo un mes entero de baja. Por si no fuera suficiente, a finales de septiembre me trasladé a Montreal para una estancia de dos meses, donde además empecé a evaluar los resúmenes para el Congreso Forestal Español. Vamos, ¡que como para leer estuve yo! ????
+En resumen, que me ha parecido un experimento interesante, y durante 2017 tengo pensado seguir apuntando lo que leo. Queda claro también que la cifra de 365 papers al año es demasiado ambiciosa, e intentar leer 100 parece más realista. Sin embargo, como el hashtag #365papers ha calado bastante en twitter, seguiré usando este último, aunque el verdadero objetivo sea llegar a 100. Además, tal y como sugieren aquí, guardaré registro de cómo he llagado hasta cada paper (por el sumario de contenidos de la revista, por twitter, recomendaciones de Google Scholar, etc.). Y por supuesto, si alguien más se anima, será interesante comparar diferencias!
+
+### Institución        
+
+
+```{r echo = F, fig.align = "center"}
+# Bars for Institution
+papers %>%
+        ggvis(~Institution) %>%
+        layer_bars() %>%
+        add_axis("x", title = "Institution", title_offset = 240,
+                 properties = axis_props(labels = list(angle = 90,
+                                                       align = "left",
+                                                       baseline="middle")))
+```
+
